@@ -111,7 +111,7 @@ class Client extends EventEmitter {
 
 
 
-
+  pendingPromises = 0
 
   /**
    * Constructor for Client
@@ -1069,7 +1069,7 @@ class Client extends EventEmitter {
       _subscribe.call(
         this,
         variableName.trim(),
-        callback,
+        this.trackPendingPromises(callback),
         {
           transmissionMode: (onChange === true ? ADS.ADS_TRANS_MODE.OnChange : ADS.ADS_TRANS_MODE.Cyclic),
           cycleTime: cycleTime,
@@ -1081,7 +1081,14 @@ class Client extends EventEmitter {
     })
   }
 
-
+  
+  trackPendingPromises(p) {
+    ++this.pendingPromises;
+    p.catch(e => e).then(() => {
+        --this.pendingPromises;
+    });
+    return p;
+  }
 
 
 
