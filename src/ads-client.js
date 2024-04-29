@@ -1069,7 +1069,7 @@ class Client extends EventEmitter {
       _subscribe.call(
         this,
         variableName.trim(),
-        this.trackPendingPromises(callback),
+        callback,
         {
           transmissionMode: (onChange === true ? ADS.ADS_TRANS_MODE.OnChange : ADS.ADS_TRANS_MODE.Cyclic),
           cycleTime: cycleTime,
@@ -6362,7 +6362,7 @@ async function _onAdsCommandReceived(packet) {
 
             //First we parse the data from received byte buffer
             try {
-              const parsedValue = await sub.dataParser(sample.data)
+              const parsedValue = await this.trackPendingPromises(sub.dataParser(sample.data))
 
               parsedValue.timeStamp = stamp.timeStamp
               debug(`_onAdsCommandReceived(): Parsing done for handle "${sample.notificationHandle}" (%o)`, sub.target)
