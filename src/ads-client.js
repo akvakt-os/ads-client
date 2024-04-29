@@ -6358,7 +6358,7 @@ async function _onAdsCommandReceived(packet) {
               const parsedValue = await sub.dataParser(sample.data)
 
               parsedValue.timeStamp = stamp.timeStamp
-
+              debug(`_onAdsCommandReceived(): Parsing done for handle "${sample.notificationHandle}" (%o)`, sub.target)
               //Then lets call the users callback
               sub.callback && sub.callback(
                 parsedValue,
