@@ -111,7 +111,7 @@ class Client extends EventEmitter {
 
 
 
-  pendingPromises = 0
+
 
   /**
    * Constructor for Client
@@ -1081,7 +1081,7 @@ class Client extends EventEmitter {
     })
   }
 
-  
+
 
 
 
@@ -4593,7 +4593,6 @@ function _subscribe(target, callback, settings) {
             await client.unsubscribe(this.notificationHandle)
           },
           dataParser: async function (value) {
-            ++this.pendingPromises 
             try {
               if (this.symbolInfo.type) {
                 const dataType = await client.getDataType(this.symbolInfo.type)
@@ -4620,8 +4619,6 @@ function _subscribe(target, callback, settings) {
               }
             } catch (err) {
               throw err
-            } finally {
-              --this.pendingPromises
             }
           }
         }
