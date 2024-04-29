@@ -5589,11 +5589,12 @@ function _getDataTypeRecursive(dataTypeName, firstLevel = true, size = null) {
   return new Promise(async (resolve, reject) => {
     let dataType = {}
 
-    try {
-      dataType = await _getDataTypeInfo.call(this, dataTypeName)
 
-    } catch (err) {
-      //Empty dummy data type
+    if (ADS.BASE_DATA_TYPES.isKnownType(dataTypeName)) {
+      const baseDataType = ADS.BASE_DATA_TYPES.find(dataTypeName)
+
+      //debugD(`_getDataTypeRecursive(): Data type ${dataTypeName} was not found from PLC - using local pseudo/base data type info`)
+
       dataType = {
         version: 1,
         hashValue: 0,
@@ -5618,25 +5619,53 @@ function _getDataTypeRecursive(dataTypeName, firstLevel = true, size = null) {
         rpcMethods: []
       }
 
-      //Not found. Try if it's base type (to support TwinCAT 2 and 3.1.4020 and lower)
-      if (ADS.BASE_DATA_TYPES.isPseudoType(dataTypeName)) {
-        dataTypeName = ADS.BASE_DATA_TYPES.getTypeByPseudoType(dataTypeName, size)
-      }
 
-      if (ADS.BASE_DATA_TYPES.isKnownType(dataTypeName)) {
-        const baseDataType = ADS.BASE_DATA_TYPES.find(dataTypeName)
+      dataType.size = (size == null ? baseDataType.size : size)
+      dataType.adsDataType = baseDataType.adsDataType
+      dataType.adsDataTypeStr = ADS.ADS_DATA_TYPES.toString(dataType.adsDataType)
+      dataType.nameLength = dataTypeName.length
+      dataType.name = dataTypeName
 
-        debugD(`_getDataTypeRecursive(): Data type ${dataTypeName} was not found from PLC - using local pseudo/base data type info`)
+    }
+    else {
+      try {
+        dataType = await _getDataTypeInfo.call(this, dataTypeName)
 
-        dataType.size = (size == null ? baseDataType.size : size)
-        dataType.adsDataType = baseDataType.adsDataType
-        dataType.adsDataTypeStr = ADS.ADS_DATA_TYPES.toString(dataType.adsDataType)
-        dataType.nameLength = dataTypeName.length
-        dataType.name = dataTypeName
+      } catch (err) {
+        //Empty dummy data type
+        dataType = {
+          version: 1,
+          hashValue: 0,
+          typeHashValue: 0,
+          size: 0,
+          offset: 0,
+          adsDataType: 0,
+          adsDataTypeStr: '',
+          flags: [ADS.ADS_DATA_TYPE_FLAGS.DataType],
+          flagsStr: ADS.ADS_DATA_TYPE_FLAGS.toStringArray([ADS.ADS_DATA_TYPE_FLAGS.DataType]),
+          nameLength: '',
+          typeLength: 0,
+          commentLength: 0,
+          arrayDimension: 0,
+          subItemCount: 0,
+          name: '',
+          type: '',
+          comment: '',
+          arrayData: [],
+          subItems: [],
+          attributes: [],
+          rpcMethods: []
+        }
 
-      } else {
-        //Unknown type
-        return reject(new ClientException(this, '_getDataTypeRecursive()', err))
+        //Not found. Try if it's base type (to support TwinCAT 2 and 3.1.4020 and lower)
+        if (ADS.BASE_DATA_TYPES.isPseudoType(dataTypeName)) {
+          dataTypeName = ADS.BASE_DATA_TYPES.getTypeByPseudoType(dataTypeName, size)
+        }
+
+        else {
+          //Unknown type
+          return reject(new ClientException(this, '_getDataTypeRecursive()', err))
+        }
       }
     }
 
