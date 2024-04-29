@@ -1082,13 +1082,6 @@ class Client extends EventEmitter {
   }
 
   
-  trackPendingPromises(p) {
-    ++this.pendingPromises;
-    p.catch(e => e).then(() => {
-        --this.pendingPromises;
-    });
-    return p;
-  }
 
 
 
@@ -4600,6 +4593,7 @@ function _subscribe(target, callback, settings) {
             await client.unsubscribe(this.notificationHandle)
           },
           dataParser: async function (value) {
+            ++this.pendingPromises 
             try {
               if (this.symbolInfo.type) {
                 const dataType = await client.getDataType(this.symbolInfo.type)
@@ -4626,6 +4620,8 @@ function _subscribe(target, callback, settings) {
               }
             } catch (err) {
               throw err
+            } finally {
+              --this.pendingPromises
             }
           }
         }
@@ -6362,7 +6358,7 @@ async function _onAdsCommandReceived(packet) {
 
             //First we parse the data from received byte buffer
             try {
-              const parsedValue = await this.trackPendingPromises(sub.dataParser(sample.data))
+              const parsedValue = await sub.dataParser(sample.data)
 
               parsedValue.timeStamp = stamp.timeStamp
               debug(`_onAdsCommandReceived(): Parsing done for handle "${sample.notificationHandle}" (%o)`, sub.target)
